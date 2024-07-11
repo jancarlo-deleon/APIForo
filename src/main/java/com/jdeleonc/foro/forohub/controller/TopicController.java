@@ -5,6 +5,7 @@ import com.jdeleonc.foro.forohub.dto.topic.DatosActualizacionTopic;
 import com.jdeleonc.foro.forohub.dto.topic.DatosRespuestaTopic;
 import com.jdeleonc.foro.forohub.model.Topic;
 import com.jdeleonc.foro.forohub.repository.TopicRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,27 +28,34 @@ public class TopicController {
 
     @PostMapping
     @Transactional
-    public ResponseEntity registrar(@RequestBody @Valid DatosRegistroTopic datos, UriComponentsBuilder uriBuilder){
-
-        Topic topic = new Topic(datos);
-
-        topicRepository.save(topic);
-
-        var uri = uriBuilder.path("/topics/{id}").buildAndExpand(topic.getId()).toUri();
-
-        return ResponseEntity.created(uri).body(new DatosRespuestaTopic(topic));
-
+    public ResponseEntity registrar(@RequestBody @Valid DatosRegistroTopic datos, UriComponentsBuilder uriBuilder) {
+        try {
+            Topic topic = new Topic(datos);
+            topicRepository.save(topic);
+            var uri = uriBuilder.path("/topics/{id}").buildAndExpand(topic.getId()).toUri();
+            return ResponseEntity.created(uri).body(new DatosRespuestaTopic(topic));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Solicitud mal formada");
+        }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity detallar(@PathVariable Long id) {
-        var topic = topicRepository.getReferenceById(id);
-        return ResponseEntity.ok(new DatosRespuestaTopic(topic));
+        try {
+            var topic = topicRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Datos no encontrados"));
+            return ResponseEntity.ok(new DatosRespuestaTopic(topic));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
     @GetMapping
     public ResponseEntity<Page<DatosRespuestaTopic>> listar(@PageableDefault(size = 10, sort = {"nombre"}) Pageable paginacion) {
         var page = topicRepository.findAll(paginacion).map(DatosRespuestaTopic::new);
+        if (page.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Page.empty());
+        }
         return ResponseEntity.ok(page);
     }
 
@@ -88,5 +96,17 @@ public class TopicController {
         }
     }
 
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity<?> eliminarTopic(@PathVariable Long id) {
+        Optional<Topic> optionalTopic = topicRepository.findById(id);
+
+        if (optionalTopic.isPresent()) {
+            topicRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
 }
