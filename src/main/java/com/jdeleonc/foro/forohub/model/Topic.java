@@ -1,6 +1,7 @@
 package com.jdeleonc.foro.forohub.model;
 
 import com.jdeleonc.foro.forohub.DatosRegistroTopic;
+import com.jdeleonc.foro.forohub.dto.topic.DatosActualizacionTopic;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -39,6 +40,15 @@ public class Topic {
     private String curso;
 
     public Topic(DatosRegistroTopic datos){
+
+        this.titulo = datos.titulo();
+        this.mensaje= datos.mensaje();
+        this.autor = datos.autor();
+        this.curso = datos.curso();
+
+    }
+
+    public Topic(DatosActualizacionTopic datos){
 
         this.titulo = datos.titulo();
         this.mensaje= datos.mensaje();
