@@ -27,6 +27,8 @@ public class Usuario implements UserDetails {
     @NotNull
     @Column(length = 300)
     private String password;
+    @NotNull
+    private String email;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
