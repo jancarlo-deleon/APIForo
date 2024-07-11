@@ -7,6 +7,9 @@ import com.jdeleonc.foro.forohub.repository.TopicRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -36,6 +39,12 @@ public class TopicController {
     public ResponseEntity detallar(@PathVariable Long id) {
         var topic = topicRepository.getReferenceById(id);
         return ResponseEntity.ok(new DatosRespuestaTopic(topic));
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<DatosRespuestaTopic>> listar(@PageableDefault(size = 10, sort = {"nombre"}) Pageable paginacion) {
+        var page = topicRepository.findAll(paginacion).map(DatosRespuestaTopic::new);
+        return ResponseEntity.ok(page);
     }
 
 
